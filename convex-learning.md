@@ -18,6 +18,8 @@ export default defineSchema({
 	}),
 });
 ```
+# in above file i have created two tables 
+# so below now we create those two files in ts
 
 # CREATE TASKS
 
