@@ -14,7 +14,7 @@ http.route({
 		try {
 			const result = await ctx.runAction(internal.clerk.fulfill, {
 				payload: payloadString,
-				headers: {
+				headers: {  // svix use webhooks
 					"svix-id": headerPayload.get("svix-id")!,
 					"svix-signature": headerPayload.get("svix-signature")!,
 					"svix-timestamp": headerPayload.get("svix-timestamp")!,
@@ -30,29 +30,31 @@ http.route({
 						image: result.data.image_url,
 					});
 					break;
-				case "user.updated":
+				
+				case "user.updated":  // when user updates image etc or name
 					await ctx.runMutation(internal.users.updateUser, {
 						tokenIdentifier: `${process.env.CLERK_APP_DOMAIN}|${result.data.id}`,
 						image: result.data.image_url,
 					});
-					break;
+					break; 
 				case "session.created":
 					await ctx.runMutation(internal.users.setUserOnline, {
 						tokenIdentifier: `${process.env.CLERK_APP_DOMAIN}|${result.data.user_id}`,
 					});
 					break;
+				
 				case "session.ended":
 					await ctx.runMutation(internal.users.setUserOffline, {
 						tokenIdentifier: `${process.env.CLERK_APP_DOMAIN}|${result.data.user_id}`,
 					});
-					break;
+					break; 
 			}
 
 			return new Response(null, {
 				status: 200,
 			});
 		} catch (error) {
-			console.log("Webhook Error🔥🔥", error);
+			console.log("Webhook Error", error);
 			return new Response("Webhook Error", {
 				status: 400,
 			});

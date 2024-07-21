@@ -9,9 +9,9 @@ import { internalAction } from "./_generated/server";
 
 const WEB_HOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET as string;
 
-export const fulfill = internalAction({
+export const fulfill = internalAction({ // can be called by http.ts only not by user
 	args: {
-		headers: v.any(),
+		headers: v.any(),   // these are sent from http.ts file
 		payload: v.string(),
 	},
 	handler: async (ctx, args) => {
