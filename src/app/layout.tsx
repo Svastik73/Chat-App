@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 import {Toaster} from "react-hot-toast";
 export const metadata: Metadata = {
   title: "Sonnet",
-  description: "Chat Privately with new age Encryption!",
+  description: "Chat Privately with new age Encryption",
 };
 
 export default function RootLayout({

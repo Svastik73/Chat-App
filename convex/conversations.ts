@@ -27,6 +27,7 @@ export const createConversation=mutation({
         let groupImage;
         if(args.groupImage){
             // todo upload image later!
+            groupImage = (await ctx.storage.getUrl(args.groupImage)) as string;
         }
         const conversationId=await ctx.db.insert("conversations",{
             participants:args.participants,

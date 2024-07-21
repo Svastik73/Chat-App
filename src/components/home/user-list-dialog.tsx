@@ -16,6 +16,7 @@ import { ImageIcon, MessageSquareDiff } from "lucide-react";
 
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import toast from "react-hot-toast";
 
 const UserListDialog = () => {
 	const [selectedUsers, setSelectedUsers] = useState<Id<"users">[]>([]);
@@ -72,11 +73,21 @@ const UserListDialog = () => {
         setSelectedUsers([]);
 	    setGroupName("");
          setSelectedImage(null);
-	}
+	// TODO:   UPDATE GLOAL STATE SELECTEDCONVERSATION!
+	
+		}
+
+
 	catch(err){
-		console.error(err);
+          // replace it with hottoast library
+		//console.error(err);
+		toast.error("Couldn't create a conversation.!")
+	    console.error(err);
 	}
-   }
+	finally{
+		setIsLoading(false);
+	} 
+   };
 
 
    useEffect(()=>{  // helps to set image for group !

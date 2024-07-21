@@ -64,7 +64,7 @@ export const getUsers = query({
 		}
 
 		const users = await ctx.db.query("users").collect();
-        // return users ; this will include yourself too in group chat addition function! 
+        // return users ; this will include yourself too in group chat addition function!  
 		return users.filter((user) => user.tokenIdentifier !== identity.tokenIdentifier);
 	},
 });

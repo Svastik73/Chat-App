@@ -22,7 +22,7 @@ const LeftPanel = () => {
 <SignedIn><SignOutButton></SignOutButton></SignedIn>  {/* we get these from clerk*/}
 <SignedOut><SignIn></SignIn></SignedOut> {/*If signed out show sign in*/}
 					<div className='flex items-center gap-3'>
-						{isAuthenticated && <UserListDialog/>}
+						{isAuthenticated && <UserListDialog/> }
 											<ThemeSwitch />
 						<LogOut size={20} className='cursor-pointer' />
 					</div>
