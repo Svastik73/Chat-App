@@ -5,14 +5,19 @@ import ThemeSwitch from "./theme-switch";
 import Conversation from "./conversations";
 
 import { Key } from "react";
-import { conversations } from "@/dummy-data/db";
+
 import { UserButton } from "@clerk/nextjs";
 import { SignedIn, SignedOut, SignIn, SignOutButton } from "@clerk/clerk-react";
 import UserListDialog from "./user-list-dialog";
-import { useConvexAuth } from "convex/react";
+import { useConvexAuth, useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 
 const LeftPanel = () => {
 	const {isAuthenticated}=useConvexAuth();
+	const  conversations=useQuery(api.conversations.getMyConversations,isAuthenticated?undefined:"skip"); 
+	// isAuthenticated is used to give authentication time to do its work else it will trhow eror
+	// hence dont update screen until it is uthenticated
+	console.log(conversations);
 	return (
 		<div className='w-1/4 border-gray-600 border-r'>
 			<div className='sticky top-0 bg-left-panel z-10'>
@@ -49,15 +54,15 @@ const LeftPanel = () => {
 			{/* Chat List */}
 			<div className='my-3 flex flex-col gap-0 max-h-[80%] overflow-auto'>
 				{/* Conversations will go here*/}
-				{conversations.map((conversation) => (
-					<Conversation key={conversation._id} conversation={conversation} />
+				{conversations?.map((conversation) => (
+					<Conversation key={conversation._id} conversation={conversation}  />
 				))}
 
 				{conversations?.length === 0 && (
 					<>
 						<p className='text-center text-gray-500 text-sm mt-3'>No conversations yet</p>
 						<p className='text-center text-gray-500 text-sm mt-3 '>
-							We understand {"you're"} an introvert, but {"you've"} got to start somewhere 😊
+							Lets start to chat!
 						</p>
 					</>
 				)}
