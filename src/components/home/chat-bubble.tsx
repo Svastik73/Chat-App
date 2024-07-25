@@ -2,7 +2,10 @@ import { MessageSeenSvg } from "@/lib/svgs";
 import { IMessage, useConversationStore } from "@/store/chat-store";
 import ChatBubbleAvatar from "./chat-bubble-avatar";
 import DateIndicator from "./date-indicator";
-
+import Image from "next/image";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogDescription } from "../ui/dialog";
+import ReactPlayer from "react-player";
 type ChatBubbleProps={
     message:IMessage;
 	me:any;
@@ -21,6 +24,21 @@ const ChatBubble = ({me,message,previousMessage}:ChatBubbleProps) => {
 	const isGroup=selectedConversation?.isGroup;
 	const fromMe=message.sender._id==me._id;
 	const bgClass=fromMe?"bg-green-chat":"bg-white dark:bg-gray-primary";
+	const [open,setOpen]=useState(false);// whether image dialog should open or not!
+	
+	const renderMessageContent = () => {
+		switch (message.messageType) {
+			case "text":
+				return <TextMessage message={message} />;
+			case "image":
+				return <ImageMessage message={message} handleClick={() => setOpen(true)} />;
+			case "video":
+				return <VideoMessage message={message} />;
+			default:
+				return null;
+		}
+	};
+	
 	if(!fromMe){
 		return(
 			<>
@@ -29,7 +47,15 @@ const ChatBubble = ({me,message,previousMessage}:ChatBubbleProps) => {
 			     <ChatBubbleAvatar message={message} isMember={isMember} isGroup={isGroup}/>
 				  <div  className={`flex flex-col z-20 max-w-fit px-2 pt-1 rounded-md shadow-md relative ${bgClass}`}>
                        <OtherMessageIndicator></OtherMessageIndicator> {/*This component is to show triangle comming out from chat */}
-				        <TextMessage message={message}></TextMessage>
+				       
+                        {renderMessageContent()}
+						 
+						{open && <ImageDialog
+						   src={message.content}
+						   open={open}
+						   onClose={()=>setOpen(false)}
+						/>}
+						
 						<MessageTime time={time}
 						fromMe={fromMe}>
 
@@ -45,7 +71,15 @@ const ChatBubble = ({me,message,previousMessage}:ChatBubbleProps) => {
 			      <div  className={`flex z-20 max-w-fit px-2 pt-1 rounded-md shadow-md ml-auto relative ${bgClass}`}>
 					<SelfMessageIndicator></SelfMessageIndicator>
 				 {/*This component is to show triangle comming out from chat */}
-				        <TextMessage message={message}></TextMessage>
+			     
+
+				 {renderMessageContent()}
+				 {open && <ImageDialog
+						   src={message.content}
+						   open={open}
+						   onClose={()=>setOpen(false)}
+						/>}	
+					
 						<MessageTime time={time}
 						fromMe={fromMe} >
 
@@ -56,6 +90,44 @@ const ChatBubble = ({me,message,previousMessage}:ChatBubbleProps) => {
 
 };
 export default ChatBubble;
+const VideoMessage=({message}:{message:IMessage})=>{
+	return <ReactPlayer url={message.content}  width='250px' height='250px' controls={true}/>
+}
+
+
+const ImageMessage = ({ message ,handleClick}: { message: IMessage,handleClick:()=>void }) => {
+	return (
+		<div className='w-[250px] h-[250px] m-2 relative'>
+			<Image
+				src={message.content}
+				fill
+				className='cursor-pointer object-cover rounded'
+				alt='image'
+		         onClick={handleClick}
+			/>
+		</div>
+	);
+};
+
+
+const ImageDialog = ({ src, onClose, open }: { open: boolean; src: string; onClose: () => void }) => {
+	return ( // show image on clicking in new dialog box
+		<Dialog
+			open={open}
+			onOpenChange={(isOpen) => {
+				if (!isOpen) onClose();
+			}}
+		>
+			<DialogContent className='min-w-[750px]'>
+				<DialogDescription className='relative h-[450px] flex justify-center'>
+					<Image src={src} fill className='rounded-lg object-contain' alt='image' />
+				</DialogDescription>
+			</DialogContent>
+		</Dialog>
+	);
+};
+
+
 const MessageTime = ({ time, fromMe }: { time: string; fromMe: boolean }) => {
 	return (
 		<p className='text-[10px] mt-2 self-end flex gap-1 items-center'>

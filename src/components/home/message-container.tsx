@@ -26,6 +26,7 @@ const MessageContainer = () => {
 						  
 							message={msg}
 							me={me}
+							previousMessage={idx>0 ? messages[idx-1]:undefined}
 						/>
 					</div>
 				))}
