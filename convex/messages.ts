@@ -1,45 +1,92 @@
 import { ConvexError, v } from "convex/values";
-import { mutation,query } from "./_generated/server";
-// send recieve meesages
-export const sendTextMessage=mutation({
-    args:{
-        sender: v.string(),
-        content: v.string(),
-        conversation: v.id("conversations"),  
-    },
-    handler: async(ctx,args)=>{
-        const identity=await ctx.auth.getUserIdentity();
-        
-        if(!identity)  throw new ConvexError("Not uthenticated");    
-        
-        const user=await ctx.db.query("users")
-            .withIndex("by_tokenIdentifier", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
-            .unique();
-        
-        if(!user) throw new ConvexError("User not found");
-        
-        const conversation=await ctx.db.query("conversations")
-        .filter(q=>q.eq(q.field("_id"),args.conversation)).first();
+import { mutation, query } from "./_generated/server";
+import { api } from "./_generated/api";
 
-        if(!conversation) throw new ConvexError("No conversation found");
+export const sendTextMessage = mutation({
+	args: {
+		sender: v.string(),
+		content: v.string(),
+		conversation: v.id("conversations"),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) {
+			throw new ConvexError("Not authenticated");
+		}
 
-        if(!conversation.participants.includes(user._id)){
-            throw new ConvexError("You are not part of this conversation");
-        }
-        
-        await ctx.db.insert("messages",{
-            sender:args.sender,
-            content:args.content,
-            conversation:args.conversation,
-            messageType:"text",
-        });
+		const user = await ctx.db
+			.query("users")
+			.withIndex("by_tokenIdentifier", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
+			.unique();
 
-        //TODO: CHATGPT SUPPORT
+		if (!user) {
+			throw new ConvexError("User not found");
+		}
 
-    },
+		const conversation = await ctx.db
+			.query("conversations")
+			.filter((q) => q.eq(q.field("_id"), args.conversation))
+			.first();
+
+		if (!conversation) {
+			throw new ConvexError("Conversation not found");
+		}
+
+		if (!conversation.participants.includes(user._id)) {
+			throw new ConvexError("You are not part of this conversation");
+		}
+
+		await ctx.db.insert("messages", {
+			sender: args.sender,
+			content: args.content,
+			conversation: args.conversation,
+			messageType: "text",
+		});
+
+		// TODO => add @gpt check later
+		if (args.content.startsWith("@gpt")) {
+			// Schedule the chat action to run immediately
+			await ctx.scheduler.runAfter(0, api.openai.chat, {
+				messageBody: args.content,
+				conversation: args.conversation,
+			});
+		}
+
+		if (args.content.startsWith("@dall-e")) {
+			await ctx.scheduler.runAfter(0, api.openai.dall_e, {
+				messageBody: args.content,
+				conversation: args.conversation,
+			});
+		}
+		  
+/*
+		if (args.content.startsWith("@dall-e")) {
+			await ctx.scheduler.runAfter(0, api.openai.dall_e, {
+				messageBody: args.content,
+				conversation: args.conversation,
+			});
+		} */
+	},
 });
 
-// Optimized  below to use hashmap to store sender profile
+export const sendChatGPTMessage = mutation({
+	args: {
+		content: v.string(),
+		conversation: v.id("conversations"),
+		messageType: v.union(v.literal("text"), v.literal("image")),
+	},
+	handler: async (ctx, args) => {
+		await ctx.db.insert("messages", {
+			content: args.content,
+			sender: "ChatGPT",
+			messageType: args.messageType,
+			conversation: args.conversation,
+		});
+	},
+});
+
+
+// Optimized
 export const getMessages = query({
 	args: {
 		conversation: v.id("conversations"),
@@ -76,14 +123,14 @@ export const getMessages = query({
 					// Cache the sender profile
 					userProfileCache.set(message.sender, sender);
 				}
+
 				return { ...message, sender };
 			})
 		);
+
 		return messagesWithSender;
 	},
 });
-
-
 
 export const sendImage = mutation({
 	args: { imgId: v.id("_storage"), sender: v.id("users"), conversation: v.id("conversations") },
@@ -123,42 +170,35 @@ export const sendVideo = mutation({
 	},
 });
 
+// unoptimized
 
+// export const getMessages = query({
+// 	args:{
+// 		conversation: v.id("conversations"),
+// 	},
+// 	handler: async (ctx, args) => {
+// 		const identity = await ctx.auth.getUserIdentity();
+// 		if (!identity) {
+// 			throw new ConvexError("Not authenticated");
+// 		}
 
+// 		const messages = await ctx.db
+// 		.query("messages")
+// 		.withIndex("by_conversation", q=> q.eq("conversation", args.conversation))
+// 		.collect();
 
+// 		// john => 200 , 1
+// 		const messagesWithSender = await Promise.all(
+// 			messages.map(async (message) => {
+// 				const sender = await ctx.db
+// 				.query("users")
+// 				.filter(q => q.eq(q.field("_id"), message.sender))
+// 				.first();
 
+// 				return {...message,sender}
+// 			})
+// 		)
 
-
-
-
-//unoptimized way to show messages 
-/*
-export const getMessage=query({
-   args:{
-    conversation:v.id("conversations"),
-
-   },
-   handler:async(ctx,args)=>{
-      const identity=await ctx.auth.getUserIdentity();
-      if(!identity) throw new ConvexError("Not authenticated");
-
-
-      const messages=await ctx.db
-      .query("messages")
-      .withIndex("by_conversation",q=>q.eq("conversation",args.conversation))
-      .collect();
-
-      const messagesWithSender = await Promise.all(
-        messages.map(async(message)=>{
-            const sender=await ctx.db.query("users")
-            .filter(q=>q.eq(q.field("_id"),message.sender))
-            .first();
-            return {...message,sender}
-        })
-      );
-      return messagesWithSender;
-
-   },
-});
-
-*/
+// 		return messagesWithSender;
+// 	}
+// });

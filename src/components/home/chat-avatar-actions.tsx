@@ -63,9 +63,8 @@ const ChatAvatarActions = ({ me, message }: ChatAvatarActionsProps) => {
 	return (
 		<div
 			className='text-[11px] flex gap-4 justify-between font-bold cursor-pointer group'
-			onClick={handleCreateConversation} 
-         
-		>   {/*This will take us to conversation page of that user! */}
+			onClick={handleCreateConversation}
+		>
 			{isGroup && message.sender.name}
 
 			{!isMember && !fromAI && isGroup && <Ban size={16} className='text-red-500' />}

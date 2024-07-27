@@ -4,20 +4,37 @@ import { Input } from "../ui/input";
 import ThemeSwitch from "./theme-switch";
 import Conversation from "./conversations";
 
-import { Key } from "react";
+import { Key, useEffect } from "react";
 
 import { UserButton } from "@clerk/nextjs";
 import { SignedIn, SignedOut, SignIn, SignOutButton } from "@clerk/clerk-react";
 import UserListDialog from "./user-list-dialog";
 import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import { useConversationStore } from "@/store/chat-store";
 
 const LeftPanel = () => {
-	const {isAuthenticated}=useConvexAuth();
+	const {isAuthenticated,isLoading}=useConvexAuth();
 	const  conversations=useQuery(api.conversations.getMyConversations,isAuthenticated?undefined:"skip"); 
 	// isAuthenticated is used to give authentication time to do its work else it will trhow eror
 	// hence dont update screen until it is uthenticated
-	console.log(conversations);
+	
+	const {selectedConversation,setSelectedConversation}=useConversationStore();
+
+	
+	useEffect(()=>{
+         const conversationIds=conversations?.map((conversation: { _id: any; })=>conversation._id);
+	    if(selectedConversation && conversationIds && !conversationIds.includes(selectedConversation._id)){
+			setSelectedConversation(null);
+		}
+	
+	},[conversations,selectedConversation,setSelectedConversation]);
+   // resets state to remove user from group , it will show whatapp banner on removal	
+	if(isLoading) return null;
+	
+
+	
+	
 	return (
 		<div className='w-1/4 border-gray-600 border-r'>
 			<div className='sticky top-0 bg-left-panel z-10'>
